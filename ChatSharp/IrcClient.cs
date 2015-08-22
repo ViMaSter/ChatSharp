@@ -1,7 +1,6 @@
 using ChatSharp.Events;
 using ChatSharp.Handlers;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Security;
@@ -51,7 +50,7 @@ namespace ChatSharp
         private int ServerPort { get; set; }
         private Timer PingTimer { get; set; }
         private Socket Socket { get; set; }
-        private ConcurrentQueue<string> WriteQueue { get; set; }
+        private Queue<string> WriteQueue { get; set; }
         private bool IsWriting { get; set; }
 
         internal RequestManager RequestManager { get; set; }
@@ -147,7 +146,7 @@ namespace ChatSharp
             MessageHandlers.RegisterDefaultHandlers(this);
             RequestManager = new RequestManager();
             UseSSL = useSSL;
-            WriteQueue = new ConcurrentQueue<string>();
+            WriteQueue = new Queue<string>();
             ServerInfo = new ServerInfo();
             PrivmsgPrefix = "";
             Users = new UserPool();
@@ -173,10 +172,13 @@ namespace ChatSharp
             checkQueue.Elapsed += (sender, e) =>
             {
                 string nextMessage;
-                if (WriteQueue.Count > 0)
+                lock (WriteQueue)
                 {
-                    while (!WriteQueue.TryDequeue(out nextMessage));
-                    SendRawMessage(nextMessage);
+                    if (WriteQueue.Count > 0)
+                    {
+                        nextMessage = WriteQueue.Dequeue();
+                        SendRawMessage(nextMessage);
+                    }
                 }
             };
             checkQueue.Start();
@@ -307,7 +309,10 @@ namespace ChatSharp
             }
             else
             {
-                WriteQueue.Enqueue(message);
+                lock (WriteQueue)
+                {
+                    WriteQueue.Enqueue(message);
+                }
             }
         }
 
@@ -349,10 +354,13 @@ namespace ChatSharp
             OnRawMessageSent(new RawMessageEventArgs((string)result.AsyncState, true));
 
             string nextMessage;
-            if (WriteQueue.Count > 0)
+            lock (WriteQueue)
             {
-                while (!WriteQueue.TryDequeue(out nextMessage));
-                SendRawMessage(nextMessage);
+                if (WriteQueue.Count > 0)
+                {
+                    nextMessage = WriteQueue.Dequeue();
+                    SendRawMessage(nextMessage);
+                }
             }
         }
 

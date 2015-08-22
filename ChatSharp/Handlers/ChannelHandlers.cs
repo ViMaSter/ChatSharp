@@ -53,7 +53,7 @@ namespace ChatSharp.Handlers
             var users = message.Parameters[3].Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
             foreach (var nick in users)
             {
-                if (string.IsNullOrWhiteSpace(nick))
+                if (String.IsNullOrEmpty(nick) || nick.Trim().Length == 0)
                     continue;
                 var mode = client.ServerInfo.GetModeForPrefix(nick[0]);
                 if (mode == null)
