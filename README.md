@@ -1,4 +1,4 @@
-# ChatSharp
+# ChatSharp for Unity
 
 A C# library for chatting on an IRC (Internet Relay Protocol) network.
 
