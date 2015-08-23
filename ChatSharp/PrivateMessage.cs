@@ -13,10 +13,22 @@ namespace ChatSharp
             Message = message.Parameters[1];
 
             User = client.Users.GetOrAdd(message.Prefix);
-            if (serverInfo.ChannelTypes.Any(c => Source.StartsWith(c.ToString())))
+
+            // Workaround for twitch IRC-servers, which don't
+            // have ChannelTypes specified
+            if (serverInfo.ChannelTypes == null)
+            {
+                serverInfo.ChannelTypes = new char[1];
+                serverInfo.ChannelTypes[0] = '#';
+            }
+
+            if (serverInfo.ChannelTypes.Any(c => Source.StartsWith(c.ToString()))) {
                 IsChannelMessage = true;
+            }
             else
+            {
                 Source = User.Nick;
+            }
         }
 
         /// <summary>
